@@ -1,0 +1,119 @@
+﻿@page "/users/edit/{Id:int}"
+@using GestionCommercial.Models
+@* @attribute [Authorize(Roles = "Admin")] *@
+
+@inject GestionCommercial.Services.UtilisateurService UtilisateurService
+@inject NavigationManager Nav
+
+<h3>@(IsNew ? "Nouvel utilisateur" : "Modifier l'utilisateur")</h3>
+
+@if (isLoading)
+{
+    <p>Chargement...</p>
+}
+else if (!string.IsNullOrEmpty(erreur))
+{
+    <div class="alert alert-danger">@erreur</div>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Nom d'utilisateur</label>
+            <InputText class="form-control" @bind-Value="model.NomUtilisateur" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Mot de passe</label>
+            <InputText type="password" class="form-control" @bind-Value="passwordPlain" />
+            @* ممكن تدير منطق خاص: ما تبدلش الباس إلا عمّرناه *@
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Rôle</label>
+            <InputText class="form-control" @bind-Value="model.Role" />
+            @* من بعد نبدلوها بـ <InputSelect> ل rôles *@
+        </div>
+
+        <div class="form-check mb-3">
+            <InputCheckbox class="form-check-input" @bind-Value="model.Actif" />
+            <label class="form-check-label">Actif</label>
+        </div>
+
+        <button class="btn btn-primary me-2" type="submit">Enregistrer</button>
+        <button class="btn btn-secondary" type="button" @onclick="Retour">
+            Annuler
+        </button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    Utilisateur model = new();
+    bool IsNew => Id == 0;
+    bool isLoading = true;
+    string? erreur;
+    string? passwordPlain;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            erreur = null;
+
+            if (!IsNew)
+            {
+                var u = await UtilisateurService.GetByIdAsync(Id);
+                if (u == null)
+                {
+                    erreur = "Utilisateur introuvable.";
+                    return;
+                }
+                model = u;
+            }
+            else
+            {
+                model.Actif = true;
+                model.DateCreation = DateTime.Now;
+            }
+        }
+        catch (Exception ex)
+        {
+            erreur = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            erreur = null;
+
+            if (IsNew)
+            {
+                await UtilisateurService.CreerAsync(model, passwordPlain);
+            }
+            else
+            {
+                await UtilisateurService.MettreAJourAsync(model, passwordPlain);
+            }
+
+            Nav.NavigateTo("/users");
+        }
+        catch (Exception ex)
+        {
+            erreur = ex.Message;
+        }
+    }
+
+    void Retour() => Nav.NavigateTo("/users");
+}

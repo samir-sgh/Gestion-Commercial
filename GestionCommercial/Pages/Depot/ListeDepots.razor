@@ -1,0 +1,81 @@
+﻿@page "/depots"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.DepotService DepotService
+@inject NavigationManager NavManager
+
+<h3>Dépôts</h3>
+
+<button class="btn btn-primary mb-3" @onclick="NewDepot">
+    Nouveau dépôt
+</button>
+
+@if (depots == null)
+{
+    <p>Chargement...</p>
+}
+else if (!depots.Any())
+{
+    <p>Aucun dépôt trouvé.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Code</th>
+                <th>Adresse</th>
+                <th>Actif</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in depots)
+            {
+                <tr>
+                    <td>@d.NomDepot</td>
+                    <td>@d.CodeDepot</td>
+                    <td>@d.Adresse</td>
+                    <td>@(d.Actif ? "Oui" : "Non")</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary me-2"
+                                @onclick="() => EditDepot(d.IdDepot)">
+                            Modifier
+                        </button>
+
+                        <button class="btn btn-sm @(d.Actif ? "btn-danger" : "btn-success")"
+                                @onclick="() => ToggleDepot(d)">
+                            @(d.Actif ? "Désactiver" : "Activer")
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Depot>? depots;
+
+    protected override async Task OnInitializedAsync()
+    {
+        depots = await DepotService.GetDepots(includeInactive: true);
+    }
+
+    void NewDepot()
+    {
+        NavManager.NavigateTo("/depots/edit");
+    }
+
+    void EditDepot(int id)
+    {
+        NavManager.NavigateTo($"/depots/edit/{id}");
+    }
+
+    async Task ToggleDepot(Depot d)
+    {
+        await DepotService.SetActif(d.IdDepot, !d.Actif);
+        depots = await DepotService.GetDepots(includeInactive: true);
+        StateHasChanged();
+    }
+}

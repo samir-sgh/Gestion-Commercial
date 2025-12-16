@@ -1,0 +1,461 @@
+﻿@page "/produits/nouveau"
+@using GestionCommercial.Models
+@using Microsoft.AspNetCore.Components.Forms
+@inject GestionCommercial.Services.ProduitService ProduitService
+@inject GestionCommercial.Services.MarqueService MarqueService
+@inject GestionCommercial.Services.AchatService AchatService
+@inject GestionCommercial.Services.StockService StockService
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    <!-- HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Nouveau produit</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Création d’un nouveau produit (prix, marque, image…)
+            </MudText>
+        </MudStack>
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   Href="/produits">
+            Retour à la liste
+        </MudButton>
+    </MudStack>
+
+    <EditForm Model="@produit" OnValidSubmit="SaveProduit">
+        <DataAnnotationsValidator />
+
+        <MudPaper Elevation="2" Class="p-4">
+            <MudGrid Spacing="3">
+
+                <!-- COLONNE GAUCHE : infos produit (sans quantité totale/stock min) -->
+                <MudItem xs="12" md="8">
+                    <MudStack Spacing="2">
+
+                        <MudTextField T="string"
+                                      Label="Nom*"
+                                      @bind-Value="produit.NomArticle"
+                                      Required="true"
+                                      RequiredError="Le nom est obligatoire" />
+
+                        <!-- Référence + Générer -->
+                        <MudStack Row="true" Spacing="1">
+                            <MudTextField T="string"
+                                          Class="mud-flex-grow-1"
+                                          Label="Référence"
+                                          @bind-Value="produit.Reference" />
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       OnClick="GenerateReference">
+                                Générer
+                            </MudButton>
+                        </MudStack>
+
+                        <!-- Marque -->
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" Spacing="1">
+                                <MudSelect T="string"
+                                           Label="Marque"
+                                           @bind-Value="produit.Marque"
+                                           Clearable="true"
+                                           Class="mud-flex-grow-1">
+                                    <MudSelectItem T="string">(Aucune)</MudSelectItem>
+                                    @if (marques != null)
+                                    {
+                                        foreach (var m in marques)
+                                        {
+                                            <MudSelectItem Value="@m.NomMarque">@m.NomMarque</MudSelectItem>
+                                        }
+                                    }
+                                </MudSelect>
+
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           OnClick="AfficherAjoutMarque">
+                                    Ajouter
+                                </MudButton>
+                            </MudStack>
+
+                            @if (showAjoutMarque)
+                            {
+                                <MudStack Row="true" Spacing="1" Class="mt-1">
+                                    <MudTextField T="string"
+                                                  Label="Nouvelle marque"
+                                                  @bind-Value="nouvelleMarque"
+                                                  Class="mud-flex-grow-1" />
+
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               OnClick="EnregistrerNouvelleMarque">
+                                        OK
+                                    </MudButton>
+
+                                    <MudButton Variant="Variant.Outlined"
+                                               Color="Color.Secondary"
+                                               OnClick="AnnulerNouvelleMarque">
+                                        Annuler
+                                    </MudButton>
+                                </MudStack>
+                            }
+                        </MudStack>
+
+
+                        <!-- Prix -->
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="4">
+                                <MudNumericField T="decimal"
+                                                 Label="Prix d'achat"
+                                                 @bind-Value="produit.PrixAchat"
+                                                 Min="0"
+                                                 Adornment="Adornment.Start"
+                                                 AdornmentText="DH"
+                                                 DecimalPlaces="2" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudNumericField T="decimal"
+                                                 Label="Prix de vente"
+                                                 @bind-Value="produit.PrixVente"
+                                                 Min="0"
+                                                 Adornment="Adornment.Start"
+                                                 AdornmentText="DH"
+                                                 DecimalPlaces="2" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudNumericField T="decimal"
+                                                 Label="Prix de gros"
+                                                 @bind-Value="produit.PrixGros"
+                                                 Min="0"
+                                                 Adornment="Adornment.Start"
+                                                 AdornmentText="DH"
+                                                 DecimalPlaces="2" />
+                            </MudItem>
+                        </MudGrid>
+
+                        <!-- Code barre + Générer -->
+                        <MudStack Row="true" Spacing="1">
+                            <MudTextField T="string"
+                                          Class="mud-flex-grow-1"
+                                          Label="Code barre"
+                                          @bind-Value="produit.CodeBarre" />
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       OnClick="GenerateBarcode">
+                                Générer
+                            </MudButton>
+                        </MudStack>
+
+                    </MudStack>
+                </MudItem>
+
+                <!-- COLONNE DROITE : image -->
+                <MudItem xs="12" md="4">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle2">Image</MudText>
+
+                        <InputFile OnChange="OnImageSelected" />
+
+                        @if (!string.IsNullOrEmpty(imagePreview))
+                        {
+                            <MudPaper Class="mt-2 d-flex justify-center" Elevation="1" Style="padding:8px;">
+                                <img src="@imagePreview"
+                                     style="max-height:160px; width:auto; border-radius:6px;" />
+                            </MudPaper>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Aucune image sélectionnée
+                            </MudText>
+                        }
+                    </MudStack>
+                </MudItem>
+
+            </MudGrid>
+
+            <!-- 🟢 STOCK INITIAL PAR DÉPÔT (dynamiques) -->
+            <MudDivider Class="my-4" />
+
+            <MudText Typo="Typo.subtitle1">Stock initial par dépôt</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                Choisissez un dépôt et saisissez la quantité initiale. Ajoutez autant de lignes que nécessaire.
+            </MudText>
+
+            @if (stockParDepot != null && stockParDepot.Any())
+            {
+                <MudTable Items="@stockParDepot"
+                          Dense="true"
+                          Hover="true"
+                          Striped="true"
+                          Elevation="0">
+                    <HeaderContent>
+                        <MudTh style="width:45%;">Dépôt</MudTh>
+                        <MudTh Style="text-align:right; width:35%;">Quantité</MudTh>
+                        <MudTh Style="width:20%; text-align:center;"></MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="ligne">
+                        <MudTd>
+                            <MudSelect T="int"
+                                       Label="Dépôt"
+                                       @bind-Value="ligne.DepotId"
+                                       Dense="true"
+                                       Margin="Margin.Dense">
+                                <MudSelectItem Value="0">-- Choisir --</MudSelectItem>
+                                @if (depots != null)
+                                {
+                                    foreach (var d in depots)
+                                    {
+                                        <MudSelectItem Value="@d.IdDepot">@d.NomDepot</MudSelectItem>
+                                    }
+                                }
+                            </MudSelect>
+                        </MudTd>
+
+                        <MudTd Style="text-align:right;">
+                            <MudNumericField T="int"
+                                             Label="Qté"
+                                             @bind-Value="ligne.Quantite"
+                                             Min="0"
+                                             Dense="true"
+                                             Margin="Margin.Dense" />
+                        </MudTd>
+
+                        <MudTd Style="text-align:center;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Disabled="@(stockParDepot.Count == 1)"
+                                           OnClick="() => SupprimerLigneDepot(ligne)" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+
+                <MudButton Class="mt-2"
+                           Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="AjouterLigneDepot">
+                    Ajouter un dépôt
+                </MudButton>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                    Aucun dépôt trouvé. Vérifiez la configuration des dépôts.
+                </MudAlert>
+            }
+
+            <!-- 🔽 Quantité totale + Stock min + Favoris تحت جدول الديبوهات -->
+            <MudDivider Class="my-4" />
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="4">
+                    <MudNumericField T="decimal"
+                                     Label="Quantité totale"
+                                     Value="totalQuantite"
+                                     ReadOnly="true"
+                                     Adornment="Adornment.Start"
+                                     AdornmentText="=" />
+                </MudItem>
+
+                <MudItem xs="12" sm="4">
+                    <MudNumericField T="int"
+                                     Label="Stock minimum"
+                                     @bind-Value="produit.StockMin"
+                                     Min="0" />
+                </MudItem>
+
+                <MudItem xs="12" sm="4" Class="d-flex align-items-center">
+                    <MudCheckBox T="bool"
+                                 @bind-Value="produit.Favoris"
+                                 Label="Favoris" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider Class="my-4" />
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           OnClick="@Annuler">
+                    Annuler
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           ButtonType="ButtonType.Submit">
+                    Enregistrer
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </EditForm>
+</MudContainer>
+
+@code {
+    Produit produit = new();
+    List<Marque>? marques;
+    string? imagePreview;
+    readonly Random _rng = new();
+    bool showAjoutMarque = false;
+    string? nouvelleMarque;
+
+
+    // 🔹 Dépôts و لائحة الأسطر الديناميكية
+    List<Depot>? depots;
+    List<DepotStockInit> stockParDepot = new();
+
+    class DepotStockInit
+    {
+        public int DepotId { get; set; } = 0;
+        public string NomDepot { get; set; } = string.Empty; // غير لواجهة فقط إلا احتجتيها
+        public int Quantite { get; set; } = 0;
+    }
+
+    // كمية إجمالية محسوبة من خطوط الديبوهات
+    decimal totalQuantite => stockParDepot?.Sum(d => (decimal)d.Quantite) ?? 0m;
+
+    protected override async Task OnInitializedAsync()
+    {
+        marques = await MarqueService.GetMarques();
+        produit.DateCreation = DateTime.Now;
+
+        depots = await AchatService.GetDepots();
+
+        // كنبدّو بخط واحد فارغ
+        stockParDepot = new List<DepotStockInit>
+        {
+            new DepotStockInit()
+        };
+    }
+
+    void AjouterLigneDepot()
+    {
+        stockParDepot.Add(new DepotStockInit());
+    }
+
+    void SupprimerLigneDepot(DepotStockInit ligne)
+    {
+        if (stockParDepot.Count <= 1)
+            return;
+
+        stockParDepot.Remove(ligne);
+    }
+
+    async Task SaveProduit()
+    {
+        // نحسب الكمية الإجمالية من الديبوهات
+        produit.Quantite = totalQuantite;
+
+        // 1) إنشاء المنتج و أخذ ID
+        int newId = await ProduitService.CreateProduit(produit);
+
+        // 2) تهيئة الستوك لكل ديبو فيه Qté > 0 و DepotId > 0
+        var lignesValides = stockParDepot
+            .Where(l => l.DepotId > 0 && l.Quantite > 0)
+            .ToList();
+
+        foreach (var ligne in lignesValides)
+        {
+            await StockService.AjusterStock(
+                newId,
+                ligne.DepotId,
+                ligne.Quantite
+            );
+        }
+
+        // 3) رجوع للائحة
+        Nav.NavigateTo("/produits");
+    }
+
+    void Annuler()
+    {
+        Nav.NavigateTo("/produits");
+    }
+
+    // IMAGE
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        using var stream = new MemoryStream();
+        await file.OpenReadStream(long.MaxValue).CopyToAsync(stream);
+        produit.ImageData = stream.ToArray();
+
+        imagePreview =
+            $"data:{file.ContentType};base64,{Convert.ToBase64String(produit.ImageData)}";
+    }
+
+    // GÉNÉRATION RÉFÉRENCE
+    private void GenerateReference()
+    {
+        if (string.IsNullOrWhiteSpace(produit.NomArticle))
+            return;
+
+        var raw = new string(
+            produit.NomArticle
+                   .Where(char.IsLetterOrDigit)
+                   .ToArray())
+                   .ToUpperInvariant();
+
+        if (raw.Length > 4)
+            raw = raw[..4];
+
+        if (raw.Length < 3)
+            raw = raw.PadRight(3, 'X');
+
+        var numberPart = _rng.Next(100, 999);
+        produit.Reference = $"{raw}-{numberPart}";
+    }
+
+    // GÉNÉRATION CODE BARRE
+    private void GenerateBarcode()
+    {
+        int length = 13;
+        var digits = new char[length];
+
+        for (int i = 0; i < length; i++)
+            digits[i] = (char)('0' + _rng.Next(0, 10));
+
+        produit.CodeBarre = new string(digits);
+    }
+
+    void AfficherAjoutMarque()
+    {
+        nouvelleMarque = string.Empty;
+        showAjoutMarque = true;
+    }
+
+    void AnnulerNouvelleMarque()
+    {
+        showAjoutMarque = false;
+        nouvelleMarque = string.Empty;
+    }
+
+    async Task EnregistrerNouvelleMarque()
+    {
+        if (string.IsNullOrWhiteSpace(nouvelleMarque))
+            return;
+
+        nouvelleMarque = nouvelleMarque.Trim();
+
+        // نضيف الماركة فـ la BDD عبر MarqueService
+        await MarqueService.CreateMarque(nouvelleMarque);
+
+        // نعاود نجيب اللائحة من جديد
+        marques = await MarqueService.GetMarques();
+
+        // نخلي الماركة الجديدة مختارة فـ المنتج
+        if (produit != null)
+            produit.Marque = nouvelleMarque;
+
+        // نسدّ الفورم الصغير
+        showAjoutMarque = false;
+        nouvelleMarque = string.Empty;
+
+        
+    }
+
+}

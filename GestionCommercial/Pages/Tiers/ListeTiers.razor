@@ -1,0 +1,335 @@
+﻿@* @page "/tiers"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.TiersService TiersService
+@inject NavigationManager Nav
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+
+    <!-- HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Tiers (Clients &amp; Fournisseurs)</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Gestion des clients, fournisseurs et clients-fournisseurs
+            </MudText>
+        </MudStack>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Href="/tiers/nouveau">
+            Nouveau tiers
+        </MudButton>
+    </MudStack>
+
+    <!-- FILTRE TYPE -->
+    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.caption" Color="Color.Secondary">Filtrer par type :</MudText>
+
+        <MudButton Variant="@(currentFilter == null ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(null))">
+            Tous
+        </MudButton>
+
+        <MudButton Variant="@(currentFilter == TiersTypes.Fournisseur ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(TiersTypes.Fournisseur))">
+            Fournisseurs
+        </MudButton>
+
+        <MudButton Variant="@(currentFilter == TiersTypes.Client ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(TiersTypes.Client))">
+            Clients
+        </MudButton>
+
+        <MudButton Variant="@(currentFilter == TiersTypes.ClientFournisseur ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(TiersTypes.ClientFournisseur))">
+            Clients &amp; Fournisseurs
+        </MudButton>
+
+        @if (tiersList != null)
+        {
+            <MudSpacer />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Nombre de tiers : <b>@tiersList.Count</b>
+            </MudText>
+        }
+    </MudStack>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Chargement des tiers...
+        </MudText>
+    }
+    else if (tiersList == null || !tiersList.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            Aucun tiers trouvé.
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@tiersList"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Elevation="1">
+
+            <HeaderContent>
+                <MudTh>Nom</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Téléphone</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Ville</MudTh>
+                <MudTh Style="width: 180px; text-align:right;"></MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd>@context.NomTiers</MudTd>
+                <MudTd>@context.TypeTiers</MudTd>
+                <MudTd>@context.Telephone</MudTd>
+                <MudTd>@context.Email</MudTd>
+                <MudTd>@context.Ville</MudTd>
+
+                <MudTd Style="text-align:right;">
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               Href="@($"/tiers/modifier/{context.IdTiers}")">
+                        Modifier
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="@(async () => await SupprimerTiers(context))">
+                        Supprimer
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    List<Tiers>? tiersList;
+    string? currentFilter;
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTiers();
+    }
+
+    private async Task LoadTiers()
+    {
+        isLoading = true;
+        tiersList = await TiersService.GetTiers(currentFilter);
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task ChangeFilter(string? filter)
+    {
+        currentFilter = filter;
+        await LoadTiers();
+    }
+
+    private async Task SupprimerTiers(Tiers t)
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "Confirmation",
+            (MarkupString)$"Voulez-vous vraiment supprimer le tiers <b>{t.NomTiers}</b> ?",
+            yesText: "Oui",
+            cancelText: "Non");
+
+        if (confirmed == true)
+        {
+            await TiersService.DeleteTiers(t.IdTiers);
+            await LoadTiers();
+        }
+    }
+}
+ *@
+
+
+
+@page "/tiers"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.TiersService TiersService
+@inject NavigationManager Nav
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+
+    <!-- HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Tiers (Clients &amp; Fournisseurs)</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Gestion des clients, fournisseurs et clients-fournisseurs
+            </MudText>
+        </MudStack>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Href="/tiers/nouveau">
+            Nouveau tiers
+        </MudButton>
+    </MudStack>
+
+    <!-- FILTRE TYPE -->
+    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.caption" Color="Color.Secondary">Filtrer par type :</MudText>
+
+        <MudButton Variant="@(currentFilter == null ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(null))">
+            Tous
+        </MudButton>
+
+        <MudButton Variant="@(currentFilter == TiersTypes.Fournisseur ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(TiersTypes.Fournisseur))">
+            Fournisseurs
+        </MudButton>
+
+        <MudButton Variant="@(currentFilter == TiersTypes.Client ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(TiersTypes.Client))">
+            Clients
+        </MudButton>
+
+        <MudButton Variant="@(currentFilter == TiersTypes.ClientFournisseur ? Variant.Filled : Variant.Outlined)"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   OnClick="@(() => ChangeFilter(TiersTypes.ClientFournisseur))">
+            Clients &amp; Fournisseurs
+        </MudButton>
+
+        @if (tiersList != null)
+        {
+            <MudSpacer />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Nombre de tiers : <b>@tiersList.Count</b>
+            </MudText>
+        }
+    </MudStack>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Chargement des tiers...
+        </MudText>
+    }
+    else if (tiersList == null || !tiersList.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            Aucun tiers trouvé.
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@tiersList"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Elevation="1">
+
+            <HeaderContent>
+                <MudTh>Nom</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Téléphone</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Ville</MudTh>
+                <!-- الكولون الجديد -->
+                <MudTh>Mode paiement défaut</MudTh>
+                <MudTh Style="width: 180px; text-align:right;"></MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd>@context.NomTiers</MudTd>
+                <MudTd>@context.TypeTiers</MudTd>
+                <MudTd>@context.Telephone</MudTd>
+                <MudTd>@context.Email</MudTd>
+                <MudTd>@context.Ville</MudTd>
+
+                <!-- عرض IdModePaiementDefault (مؤقتاً كـ Id) -->
+                <MudTd>
+                    @context.IdModePaiementDefault
+                </MudTd>
+
+                <MudTd Style="text-align:right;">
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               Href="@($"/tiers/modifier/{context.IdTiers}")">
+                        Modifier
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="@(async () => await SupprimerTiers(context))">
+                        Supprimer
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    List<Tiers>? tiersList;
+    string? currentFilter;
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTiers();
+    }
+
+    private async Task LoadTiers()
+    {
+        isLoading = true;
+        tiersList = await TiersService.GetTiers(currentFilter);
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task ChangeFilter(string? filter)
+    {
+        currentFilter = filter;
+        await LoadTiers();
+    }
+
+    private async Task SupprimerTiers(Tiers t)
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "Confirmation",
+            (MarkupString)$"Voulez-vous vraiment supprimer le tiers <b>{t.NomTiers}</b> ?",
+            yesText: "Oui",
+            cancelText: "Non");
+
+        if (confirmed == true)
+        {
+            await TiersService.DeleteTiers(t.IdTiers);
+            await LoadTiers();
+        }
+    }
+}

@@ -1,0 +1,92 @@
+﻿@page "/depots/edit"
+@page "/depots/edit/{Id:int}"
+
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.DepotService DepotService
+@inject NavigationManager NavManager
+
+<h3>@(IsNew ? "Nouveau dépôt" : "Modifier dépôt")</h3>
+
+@if (depot == null)
+{
+    <p>Chargement...</p>
+}
+else
+{
+    <EditForm Model="@depot" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Nom du dépôt</label>
+            <InputText class="form-control" @bind-Value="depot.NomDepot" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Code</label>
+            <InputText class="form-control" @bind-Value="depot.CodeDepot" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Adresse</label>
+            <InputText class="form-control" @bind-Value="depot.Adresse" />
+        </div>
+
+        <div class="form-check mb-3">
+            <InputCheckbox class="form-check-input" @bind-Value="depot.Actif" />
+            <label class="form-check-label">Actif</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary me-2">Enregistrer</button>
+        <button type="button" class="btn btn-secondary" @onclick="Back">Annuler</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    Depot? depot;
+    bool IsNew => !Id.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id.HasValue)
+        {
+            depot = await DepotService.GetDepot(Id.Value);
+            if (depot == null)
+            {
+                // ما لقاوش → رجع للائحة
+                NavManager.NavigateTo("/depots");
+                return;
+            }
+        }
+        else
+        {
+            depot = new Depot
+            {
+                Actif = true
+            };
+        }
+    }
+
+    private async Task Save()
+    {
+        if (depot == null) return;
+
+        if (IsNew)
+        {
+            int newId = await DepotService.CreateDepot(depot);
+            depot.IdDepot = newId;
+        }
+        else
+        {
+            await DepotService.UpdateDepot(depot);
+        }
+
+        NavManager.NavigateTo("/depots");
+    }
+
+    private void Back()
+    {
+        NavManager.NavigateTo("/depots");
+    }
+}

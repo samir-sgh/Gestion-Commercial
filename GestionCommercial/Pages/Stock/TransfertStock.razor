@@ -1,0 +1,301 @@
+﻿@page "/stock/transfert"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.StockService StockService
+@inject GestionCommercial.Services.AchatService AchatService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+
+    <!-- ⭐ HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Transfert de stock</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Transfert de stock entre dépôts pour un même produit
+            </MudText>
+        </MudStack>
+    </MudStack>
+
+    @if (produits == null || depots == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Chargement des données (produits, dépôts)...
+        </MudText>
+    }
+    else
+    {
+        <EditForm Model="@form" OnValidSubmit="Transfert">
+            <DataAnnotationsValidator />
+
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudGrid Spacing="3">
+
+                        <!-- Produit -->
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSelect T="int"
+                                       Label="Produit*"
+                                       Value="@form.ProduitId"
+                                       ValueChanged="OnProduitChanged"
+                                       ValueExpression="@(() => form.ProduitId)"
+                                       Required="true"
+                                       RequiredError="Produit requis">
+                                <MudSelectItem Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var p in produits)
+                                {
+                                    <MudSelectItem Value="@p.ProduitId">@p.NomArticle</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Dépôt source -->
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect T="int"
+                                       Label="Dépôt source*"
+                                       @bind-Value="form.DepotSourceId"
+                                       Required="true"
+                                       RequiredError="Dépôt source requis">
+                                <MudSelectItem Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var d in depots)
+                                {
+                                    <MudSelectItem Value="@d.IdDepot">@d.NomDepot</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Dépôt destination -->
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect T="int"
+                                       Label="Dépôt destination*"
+                                       @bind-Value="form.DepotDestId"
+                                       Required="true"
+                                       RequiredError="Dépôt destination requis">
+                                <MudSelectItem Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var d in depots)
+                                {
+                                    <MudSelectItem Value="@d.IdDepot">@d.NomDepot</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Quantité -->
+                        <MudItem xs="12" sm="6" md="2">
+                            <MudNumericField T="int"
+                                             Label="Quantité à transférer"
+                                             @bind-Value="form.Quantite"
+                                             Min="1"
+                                             Dense="true"
+                                             Margin="Margin.Dense" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   ButtonType="ButtonType.Submit"
+                                   StartIcon="@Icons.Material.Filled.CompareArrows"
+                                   Disabled="@isSubmitting">
+                            @(isSubmitting ? "Transfert..." : "Transférer")
+                        </MudButton>
+                    </MudStack>
+
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <MudAlert Severity="@alertSeverity" Class="mt-3">
+                            @message
+                        </MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </EditForm>
+
+        <!-- ⭐ STOCK DU PRODUIT SÉLECTIONNÉ -->
+        @if (form.ProduitId > 0)
+        {
+            <MudCard Elevation="1" Class="mt-4">
+                <MudCardHeader>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight:600;">
+                        Stock du produit sélectionné par dépôt
+                    </MudText>
+                </MudCardHeader>
+
+                <MudCardContent>
+                    @if (isLoadingStockProduit)
+                    {
+                        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Chargement du stock du produit...
+                        </MudText>
+                    }
+                    else if (stockProduit == null || !stockProduit.Any())
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+                            Aucun stock trouvé pour ce produit dans les dépôts.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudTable Items="@stockProduit"
+                                  Dense="true"
+                                  Hover="true"
+                                  Striped="true"
+                                  Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Produit</MudTh>
+                                <MudTh>Dépôt</MudTh>
+                                <MudTh Style="text-align:right;">Quantité réelle</MudTh>
+                            </HeaderContent>
+
+                            <RowTemplate Context="s">
+                                <MudTd>@s.NomArticle</MudTd>
+                                <MudTd>@s.NomDepot</MudTd>
+                                <MudTd Style="text-align:right;">
+                                    <MudText Typo="Typo.body2">
+                                        <strong>@s.QuantiteReelle</strong>
+                                    </MudText>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+    }
+</MudContainer>
+
+@code {
+    // ===== ViewModel du formulaire =====
+    class TransfertStockForm
+    {
+        public int ProduitId { get; set; }
+        public int DepotSourceId { get; set; }
+        public int DepotDestId { get; set; }
+        public int Quantite { get; set; } = 1;
+    }
+
+    TransfertStockForm form = new();
+
+    List<Produit>? produits;
+    List<Depot>? depots;
+
+    // Stock du produit sélectionné
+    List<ProduitStock>? stockProduit;
+    bool isLoadingStockProduit = false;
+
+    string? message;
+    Severity alertSeverity = Severity.Info;
+    bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        depots = await AchatService.GetDepots();
+        produits = await AchatService.GetProduits();
+    }
+
+    // منين يتبدّل المنتج كنجيبو ستوك ديالو من جميع الديبوهات
+    private async Task OnProduitChanged(int produitId)
+    {
+        form.ProduitId = produitId;
+        stockProduit = null;
+
+        if (produitId <= 0)
+            return;
+
+        isLoadingStockProduit = true;
+        try
+        {
+            // نستعمل نفس الداتا ديال صفحة StockActuel
+            var allStock = await StockService.GetStockActuel();
+
+            stockProduit = allStock?
+                .Where(s => s.ProduitId == produitId)
+                .ToList()
+                ?? new List<ProduitStock>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur lors du chargement du stock du produit : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoadingStockProduit = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Transfert()
+    {
+        message = null;
+
+        // ✅ validations de base
+        if (form.ProduitId == 0 || form.DepotSourceId == 0 || form.DepotDestId == 0 || form.Quantite <= 0)
+        {
+            alertSeverity = Severity.Error;
+            message = "Veuillez remplir tous les champs correctement.";
+            return;
+        }
+
+        if (form.DepotSourceId == form.DepotDestId)
+        {
+            alertSeverity = Severity.Error;
+            message = "Le dépôt source et destination doivent être différents.";
+            return;
+        }
+
+        // ✅ التحقق من الكمية فـ dépôt source
+        if (stockProduit != null && stockProduit.Any())
+        {
+            var stockSource = stockProduit.FirstOrDefault(s => s.IdDepot == form.DepotSourceId);
+
+            var dispo = stockSource?.QuantiteReelle ?? 0;
+            if (stockSource == null || form.Quantite > dispo)
+            {
+                alertSeverity = Severity.Error;
+                message = $"La quantité à transférer ({form.Quantite}) dépasse le stock disponible dans le dépôt source ({dispo}).";
+                return;
+            }
+        }
+
+        if (isSubmitting)
+            return;
+
+        isSubmitting = true;
+
+        try
+        {
+            bool ok = await StockService.TransfererStock(
+                form.ProduitId,
+                form.DepotSourceId,
+                form.DepotDestId,
+                form.Quantite);
+
+            if (ok)
+            {
+                alertSeverity = Severity.Success;
+                message = "Transfert effectué avec succès.";
+
+                // إعادة تعيين الكمية
+                form.Quantite = 1;
+
+                // إعادة تحميل الستوك بعد التحويل
+                if (form.ProduitId > 0)
+                    await OnProduitChanged(form.ProduitId);
+            }
+            else
+            {
+                alertSeverity = Severity.Error;
+                message = "Transfert non effectué.";
+            }
+        }
+        catch (Exception ex)
+        {
+            alertSeverity = Severity.Error;
+            message = "Erreur lors du transfert : " + ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

@@ -1,0 +1,19 @@
+﻿@inject NavigationManager Nav
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        // المسار الحالي (بدون الـ base)
+        var relative = Nav.ToBaseRelativePath(Nav.Uri);
+
+        // خَلّي login page بلا redirect
+        if (relative.StartsWith("login", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var returnUrl = Uri.EscapeDataString(Nav.Uri);
+        Nav.NavigateTo($"/login?returnUrl={returnUrl}", forceLoad: true);
+    }
+}

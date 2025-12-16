@@ -1,0 +1,140 @@
+﻿@page "/produits"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.ProduitService ProduitService
+@inject IDialogService DialogService
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    <!-- HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Produits</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Gestion des produits (prix, marque, image…)
+            </MudText>
+        </MudStack>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Href="/produits/nouveau">
+            Nouveau produit
+        </MudButton>
+    </MudStack>
+
+    @if (produits == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Chargement des produits...
+        </MudText>
+    }
+    else if (!produits.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            Aucun produit enregistré.
+        </MudAlert>
+    }
+    else
+    {
+        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mb-2">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Nombre de produits : <strong>@produits.Count.ToString("N0")</strong>
+            </MudText>
+        </MudStack>
+
+        <MudTable Items="@produits"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  Elevation="2">
+            <HeaderContent>
+                <MudTh>Nom</MudTh>
+                <MudTh>Réf.</MudTh>
+                <MudTh>Marque</MudTh>
+                <MudTh Style="text-align:right;">Qté</MudTh>
+                <MudTh Style="text-align:right;">Prix achat</MudTh>
+                <MudTh Style="text-align:right;">Prix vente</MudTh>
+                <MudTh Style="text-align:right;">Stock min</MudTh>
+                <MudTh>Image</MudTh>
+                <MudTh Style="text-align:center;">Fav.</MudTh>
+                <MudTh Style="width:150px; text-align:right;"></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="p">
+                <MudTd>@p.NomArticle</MudTd>
+                <MudTd>@p.Reference</MudTd>
+                <MudTd>@p.Marque</MudTd>
+                <MudTd Style="text-align:right;">@p.Quantite.ToString("N2")</MudTd>
+                <MudTd Style="text-align:right;">@p.PrixAchat.ToString("N2")</MudTd>
+                <MudTd Style="text-align:right;">@p.PrixVente.ToString("N2")</MudTd>
+                <MudTd Style="text-align:right;">@p.StockMin</MudTd>
+
+                <MudTd>
+                    @if (!string.IsNullOrEmpty(p.ImageBase64))
+                    {
+                        <img src="@p.ImageBase64"
+                             style="height:40px; width:auto; border-radius:4px;" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
+                    }
+                </MudTd>
+
+                <MudTd Style="text-align:center;">
+                    @if (p.Favoris)
+                    {
+                        <MudIcon Color="Color.Warning">@Icons.Material.Filled.Star</MudIcon>
+                    }
+                </MudTd>
+
+                <MudTd Style="text-align:right;">
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               Href="@($"/produits/modifier/{p.ProduitId}")">
+                        Modifier
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="@(async () => await SupprimerProduit(p))">
+                        Supprimer
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    List<Produit>? produits;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProduits();
+    }
+
+    private async Task LoadProduits()
+    {
+        produits = await ProduitService.GetProduits();
+    }
+
+    private async Task SupprimerProduit(Produit p)
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "Confirmation",
+            (MarkupString)$"Voulez-vous vraiment supprimer le produit <b>{p.NomArticle}</b> ?",
+            yesText: "Oui",
+            cancelText: "Non");
+
+        if (confirmed == true)
+        {
+            await ProduitService.DeleteProduit(p.ProduitId);
+            await LoadProduits();
+        }
+    }
+}

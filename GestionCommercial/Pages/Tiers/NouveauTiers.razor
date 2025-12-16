@@ -1,0 +1,99 @@
+﻿@page "/tiers/nouveau"
+@using GestionCommercial.Models
+@using Microsoft.AspNetCore.Components.Forms
+@inject GestionCommercial.Services.TiersService TiersService
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Nouveau tiers</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Ajouter un client ou un fournisseur
+            </MudText>
+        </MudStack>
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   Href="/tiers">
+            Retour à la liste
+        </MudButton>
+    </MudStack>
+
+    <EditForm Model="@tiersEdit" OnValidSubmit="SaveTiers">
+        <DataAnnotationsValidator />
+        <MudPaper Elevation="2" Class="p-4">
+            <MudStack Spacing="2">
+
+                <MudTextField T="string"
+                              Label="Nom*"
+                              @bind-Value="tiersEdit.NomTiers"
+                              For="@(() => tiersEdit.NomTiers)"
+                              Required="true"
+                              RequiredError="Le nom est obligatoire" />
+
+                <MudSelect T="string"
+                           Label="Type*"
+                           @bind-Value="tiersEdit.TypeTiers"
+                           For="@(() => tiersEdit.TypeTiers)"
+                           Required="true"
+                           RequiredError="Le type est obligatoire">
+                    <MudSelectItem Value="@TiersTypes.Fournisseur">Fournisseur</MudSelectItem>
+                    <MudSelectItem Value="@TiersTypes.Client">Client</MudSelectItem>
+                    <MudSelectItem Value="@TiersTypes.ClientFournisseur">Client &amp; Fournisseur</MudSelectItem>
+                </MudSelect>
+
+                <MudTextField T="string"
+                              Label="Adresse"
+                              @bind-Value="tiersEdit.Adresse" />
+
+                <MudTextField T="string"
+                              Label="Téléphone"
+                              @bind-Value="tiersEdit.Telephone" />
+
+                <MudTextField T="string"
+                              Label="Email"
+                              @bind-Value="tiersEdit.Email" />
+
+                <MudTextField T="string"
+                              Label="Ville"
+                              @bind-Value="tiersEdit.Ville" />
+
+                <MudDivider Class="my-2" />
+
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               OnClick="@Annuler">
+                        Annuler
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               ButtonType="ButtonType.Submit">
+                        Enregistrer
+                    </MudButton>
+                </MudStack>
+
+            </MudStack>
+        </MudPaper>
+    </EditForm>
+</MudContainer>
+
+@code {
+    Tiers tiersEdit = new()
+    {
+        TypeTiers = TiersTypes.Fournisseur
+    };
+
+    private async Task SaveTiers()
+    {
+        await TiersService.CreateTiers(tiersEdit);
+        Nav.NavigateTo("/tiers");
+    }
+
+    private void Annuler()
+    {
+        Nav.NavigateTo("/tiers");
+    }
+}

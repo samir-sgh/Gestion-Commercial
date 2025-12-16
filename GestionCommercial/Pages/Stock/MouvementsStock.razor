@@ -1,0 +1,136 @@
+﻿@page "/stock/mouvements"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.StockService StockService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    <!-- ⭐ HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Mouvements de stock</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Historique des entrées, sorties et transferts de stock
+            </MudText>
+        </MudStack>
+    </MudStack>
+
+
+    <!-- ⭐ FILTERS -->
+    <MudCard Elevation="2" Class="mb-4">
+        <MudCardContent>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker Label="Du"
+                                   @bind-Date="dateDu"
+                                   Editable="true"
+                                   DateFormat="dd/MM/yyyy" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker Label="Au"
+                                   @bind-Date="dateAu"
+                                   Editable="true"
+                                   DateFormat="dd/MM/yyyy" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3" Class="d-flex align-items-end">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="Charger"
+                               StartIcon="@Icons.Material.Filled.FilterAlt">
+                        Filtrer
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+
+    <!-- ⭐ TABLE -->
+    @if (mouvements == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Chargement des mouvements...
+        </MudText>
+    }
+    else if (!mouvements.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            Aucun mouvement trouvé pour cette période.
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@mouvements"
+                  Hover="true"
+                  Striped="true"
+                  Dense="true"
+                  Elevation="2">
+            <HeaderContent>
+                <MudTh>Date</MudTh>
+                <MudTh>Produit</MudTh>
+                <MudTh>Dépôt</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh Style="text-align:right;">Qté</MudTh>
+                <MudTh Style="text-align:right;">Avant</MudTh>
+                <MudTh Style="text-align:right;">Après</MudTh>
+                <MudTh>Document</MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="m">
+                <MudTd>@m.DateMouvement.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                <MudTd>@m.NomArticle</MudTd>
+                <MudTd>@m.NomDepot</MudTd>
+
+                <!-- Type Mouvement (Chip coloré) -->
+                <MudTd>
+                    <MudChip T="string"
+                             Color="@GetTypeColor(m.TypeMouvement)"
+                             Size="Size.Small">
+                        @m.TypeMouvement
+                    </MudChip>
+                </MudTd>
+
+                <MudTd Style="text-align:right;">@m.Qte</MudTd>
+                <MudTd Style="text-align:right;">@m.QteAvant</MudTd>
+                <MudTd Style="text-align:right;">@m.QteApres</MudTd>
+
+                <MudTd>
+                    <MudText>@m.SourceDoc @m.IdDoc</MudText>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    List<MouvementStock>? mouvements;
+    DateTime? dateDu = DateTime.Today.AddDays(-7);
+    DateTime? dateAu = DateTime.Today;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Charger();
+    }
+
+    private async Task Charger()
+    {
+        mouvements = await StockService.GetMouvements(dateDu, dateAu, null, null);
+    }
+
+    // ⭐ Color Coding Mouvement
+    Color GetTypeColor(string? type)
+    {
+        if (type == null) return Color.Default;
+
+        return type.ToLower() switch
+        {
+            "entrée" or "entree" => Color.Success,
+            "sortie" => Color.Error,
+            "transfert" => Color.Info,
+            _ => Color.Default
+        };
+    }
+}

@@ -1,0 +1,395 @@
+﻿@page "/achats/nouveau"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.AchatService AchatService
+@inject GestionCommercial.Services.TiersService TiersService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Nouvel achat</MudText>
+
+    @if (fournisseurs == null || depots == null || produits == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Class="mt-2">Chargement...</MudText>
+    }
+    else
+    {
+        <EditForm Model="achat" OnValidSubmit="Sauver">
+            <DataAnnotationsValidator />
+
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardContent>
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSelect T="int"
+                                       Label="Fournisseur"
+                                       @bind-Value="achat.IdTiers"
+                                       Required="true"
+                                       RequiredError="Fournisseur requis">
+                                <MudSelectItem T="int" Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var f in fournisseurs)
+                                {
+                                    <MudSelectItem T="int" Value="f.IdTiers">@f.NomTiers</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudButton Size="Size.Small"
+                                       Variant="Variant.Text"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="OpenNewFournisseurModal"
+                                       Class="mt-1">
+                                Nouveau fournisseur
+                            </MudButton>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect T="int"
+                                       Label="Dépôt"
+                                       @bind-Value="achat.IdDepot"
+                                       Required="true"
+                                       RequiredError="Dépôt requis">
+                                <MudSelectItem T="int" Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var d in depots)
+                                {
+                                    <MudSelectItem T="int" Value="d.IdDepot">@d.NomDepot</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="2">
+                            <MudDatePicker Label="Date"
+                                           @bind-Date="achatDate"
+                                           Editable="true"
+                                           DateFormat="dd/MM/yyyy" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect T="string"
+                                       Label="Type document"
+                                       @bind-Value="achat.TypeDocument">
+                                <MudSelectItem T="string" Value="@("Facture")">Facture</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("BL")">Bon de livraison</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("Commande")">Commande fournisseur</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField T="string"
+                                          Label="Remarque"
+                                          @bind-Value="achat.Remarque"
+                                          Lines="2" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <MudText Typo="Typo.h5" Class="mt-4 mb-2">Lignes d'achat</MudText>
+
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th style="text-align: right;">Qte</th>
+                                    <th style="text-align: right;">Prix</th>
+                                    <th style="text-align: right;">Remise %</th>
+                                    <th style="text-align: right;">Total HT</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < achat.Lignes.Count; i++)
+                                {
+                                    var index = i;
+                                    var ligne = achat.Lignes[index];
+                                    <tr>
+                                        <td>
+                                            <MudSelect T="int"
+                                                       Value="ligne.ProduitId"
+                                                       ValueChanged="@(val => OnProduitChanged(val, ligne))"
+                                                       Dense="true"
+                                                       Margin="Margin.Dense">
+                                                <MudSelectItem T="int" Value="0">--Produit--</MudSelectItem>
+                                                @foreach (var p in produits)
+                                                {
+                                                    <MudSelectItem T="int" Value="p.ProduitId">@p.NomArticle</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <MudNumericField T="int"
+                                                             Value="@ligne.QteAchetee"
+                                                             ValueChanged="@(val => { ligne.QteAchetee = val; RecalcTotal(); })"
+                                                             Dense="true"
+                                                             Margin="Margin.Dense"
+                                                             Min="0"
+                                                             HideSpinButtons="true" />
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <MudNumericField T="decimal"
+                                                             Value="ligne.PrixAchat"
+                                                             ValueChanged="@(val => { ligne.PrixAchat = val; RecalcTotal(); })"
+                                                             Dense="true"
+                                                             Margin="Margin.Dense"
+                                                             Min="0"
+                                                             Step="0.01M"
+                                                             HideSpinButtons="true" />
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <MudNumericField T="decimal?"
+                                                             Value="ligne.Remise"
+                                                             ValueChanged="@(val => { ligne.Remise = val; RecalcTotal(); })"
+                                                             Dense="true"
+                                                             Margin="Margin.Dense"
+                                                             Min="0"
+                                                             Step="0.01M"
+                                                             HideSpinButtons="true" />
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <MudText Typo="Typo.body2">
+                                                <strong>@ligne.TotalLigne.ToString("N2")</strong>
+                                            </MudText>
+                                        </td>
+                                        <td>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Color="Color.Error"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => RemoveLigne(ligne))" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="AddLigne"
+                               Class="mt-3">
+                        Ajouter une ligne
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2" Class="mt-4">
+                <MudCardContent>
+                    <MudGrid Justify="Justify.FlexEnd">
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudStack Spacing="2">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1">Total HT :</MudText>
+                                    <MudText Typo="Typo.body1">@totalHT.ToString("N2") DH</MudText>
+                                </MudStack>
+                                <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body1">TVA (20%) :</MudText>
+                                    <MudText Typo="Typo.body1">@tva.ToString("N2") DH</MudText>
+                                </MudStack>
+                                <MudDivider />
+                                <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.h6">Total TTC :</MudText>
+                                    <MudText Typo="Typo.h6" Color="Color.Success">@totalTTC.ToString("N2") DH</MudText>
+                                </MudStack>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           Href="/achats">
+                    Annuler
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           ButtonType="ButtonType.Submit">
+                    Enregistrer
+                </MudButton>
+            </MudStack>
+        </EditForm>
+    }
+</MudContainer>
+
+<!-- ⭐ MODAL NOUVEAU FOURNISSEUR -->
+<MudDialog @bind-IsVisible="showNewFournisseurModal" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Nouveau fournisseur</MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="newFournisseur" OnValidSubmit="SaveNewFournisseur">
+            <DataAnnotationsValidator />
+
+            <MudTextField T="string"
+                          Label="Nom"
+                          @bind-Value="newFournisseur.NomTiers"
+                          Required="true"
+                          RequiredError="Nom requis"
+                          Class="mb-3" />
+
+            <MudTextField T="string"
+                          Label="Adresse"
+                          @bind-Value="newFournisseur.Adresse"
+                          Class="mb-3" />
+
+            <MudTextField T="string"
+                          Label="Téléphone"
+                          @bind-Value="newFournisseur.Telephone"
+                          Class="mb-3" />
+
+            <MudTextField T="string"
+                          Label="Email"
+                          @bind-Value="newFournisseur.Email"
+                          Class="mb-3" />
+
+            <MudTextField T="string"
+                          Label="Ville"
+                          @bind-Value="newFournisseur.Ville"
+                          Class="mb-3" />
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4">
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Default"
+                           OnClick="CloseNewFournisseurModal">
+                    Annuler
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           ButtonType="ButtonType.Submit">
+                    Enregistrer
+                </MudButton>
+            </MudStack>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    Achat achat = new();
+    List<Tiers>? fournisseurs;
+    List<Depot>? depots;
+    List<Produit>? produits;
+
+    DateTime? achatDate;
+
+    decimal totalHT;
+    decimal tva;
+    decimal totalTTC;
+
+    bool showNewFournisseurModal = false;
+    Tiers newFournisseur = new() { TypeTiers = TiersTypes.Fournisseur };
+
+    DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        fournisseurs = await AchatService.GetFournisseurs();
+        depots = await AchatService.GetDepots();
+        produits = await AchatService.GetProduits();
+
+        achat.DateAchat = DateTime.Today;
+        achatDate = DateTime.Today;
+        achat.TypeDocument = "Facture";
+        achat.Statut = "Brouillon";
+
+        AddLigne();
+    }
+
+    void AddLigne()
+    {
+        achat.Lignes.Add(new LigneAchat { QteAchetee = 1 });
+        RecalcTotal();
+    }
+
+    void RemoveLigne(LigneAchat ligne)
+    {
+        achat.Lignes.Remove(ligne);
+        RecalcTotal();
+    }
+
+    void RecalcTotal()
+    {
+        totalHT = achat.Lignes.Sum(l => l.TotalLigne);
+        tva = Math.Round(totalHT * 0.20m, 2);
+        totalTTC = totalHT + tva;
+        achat.MontantTotal = totalTTC;
+    }
+
+    void OnProduitChanged(int prodId, LigneAchat ligne)
+    {
+        ligne.ProduitId = prodId;
+        var prod = produits?.FirstOrDefault(p => p.ProduitId == prodId);
+        if (prod != null)
+        {
+            ligne.PrixAchat = prod.PrixAchat;
+        }
+        RecalcTotal();
+    }
+
+    async Task Sauver()
+    {
+        if (achatDate.HasValue)
+            achat.DateAchat = achatDate.Value;
+
+        if (achat.IdTiers == 0)
+        {
+            Snackbar.Add("Veuillez sélectionner un fournisseur", Severity.Error);
+            return;
+        }
+
+        if (achat.IdDepot == 0)
+        {
+            Snackbar.Add("Veuillez sélectionner un dépôt", Severity.Error);
+            return;
+        }
+
+        if (achat.Lignes == null || !achat.Lignes.Any(l => l.ProduitId > 0 && l.QteAchetee > 0))
+        {
+            Snackbar.Add("Veuillez saisir au moins une ligne d'achat valide (produit + quantité > 0)", Severity.Error);
+            return;
+        }
+
+        RecalcTotal();
+
+        try
+        {
+            var newId = await AchatService.CreerAchat(achat);
+            Snackbar.Add("Achat créé avec succès!", Severity.Success);
+            Nav.NavigateTo($"/achats/{newId}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur lors de la création: {ex.Message}", Severity.Error);
+        }
+    }
+
+    void OpenNewFournisseurModal()
+    {
+        newFournisseur = new Tiers { TypeTiers = TiersTypes.Fournisseur };
+        showNewFournisseurModal = true;
+    }
+
+    void CloseNewFournisseurModal()
+    {
+        showNewFournisseurModal = false;
+    }
+
+    async Task SaveNewFournisseur()
+    {
+        try
+        {
+            var newId = await TiersService.CreateTiers(newFournisseur);
+            fournisseurs = await AchatService.GetFournisseurs();
+            achat.IdTiers = newId;
+            showNewFournisseurModal = false;
+            Snackbar.Add("Fournisseur créé avec succès!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur: {ex.Message}", Severity.Error);
+        }
+    }
+}

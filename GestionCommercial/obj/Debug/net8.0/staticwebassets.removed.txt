@@ -1,0 +1,2 @@
+D:\C#\Web Project\GestionCommercial\GestionCommercial\wwwroot\bootstrap\bootstrap.min.css
+D:\C#\Web Project\GestionCommercial\GestionCommercial\wwwroot\bootstrap\bootstrap.min.css.map

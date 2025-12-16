@@ -1,0 +1,125 @@
+﻿@page "/achats/{Id:int}"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.AchatService AchatService
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">
+        Détail achat #@Id
+    </MudText>
+
+    @if (achat == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body1" Class="mt-2">Chargement...</MudText>
+    }
+    else
+    {
+        <MudCard Class="mb-4" Elevation="2">
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Date</MudText>
+                        <MudText Typo="Typo.body1">@achat.DateAchat.ToShortDateString()</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Fournisseur</MudText>
+                        <MudText Typo="Typo.body1">@achat.FournisseurNom</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Dépôt</MudText>
+                        <MudText Typo="Typo.body1">@achat.DepotNom</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Type document</MudText>
+                        <MudText Typo="Typo.body1">@achat.TypeDocument</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Statut</MudText>
+                        <MudChip T="String" Color="@GetStatutColor(achat.Statut)" Size="Size.Small">
+                            @achat.Statut
+                        </MudChip>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Remarque</MudText>
+                        <MudText Typo="Typo.body1">@(string.IsNullOrEmpty(achat.Remarque) ? "-" : achat.Remarque)</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">
+            Lignes d'achat
+        </MudText>
+
+        <MudTable Items="@achat.Lignes" 
+                  Striped="true" 
+                  Hover="true" 
+                  Dense="true"
+                  Elevation="2">
+            <HeaderContent>
+                <MudTh>Produit</MudTh>
+                <MudTh Style="text-align: right;">Qte</MudTh>
+                <MudTh Style="text-align: right;">Prix</MudTh>
+                <MudTh Style="text-align: right;">Remise %</MudTh>
+                <MudTh Style="text-align: right;">Total ligne</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Produit">@context.NomArticle</MudTd>
+                <MudTd DataLabel="Qte" Style="text-align: right;">@context.QteAchetee</MudTd>
+                <MudTd DataLabel="Prix" Style="text-align: right;">@context.PrixAchat.ToString("N2") DH</MudTd>
+                <MudTd DataLabel="Remise %" Style="text-align: right;">@(context.Remise?.ToString("N2") ?? "-")</MudTd>
+                <MudTd DataLabel="Total ligne" Style="text-align: right;">
+                    <MudText Typo="Typo.body2" Color="Color.Primary">
+                        <strong>@context.TotalLigne.ToString("N2") DH</strong>
+                    </MudText>
+                </MudTd>
+            </RowTemplate>
+            <FooterContent>
+                <MudTh colspan="4" Style="text-align: right;">
+                    <MudText Typo="Typo.subtitle1"><strong>Total TTC</strong></MudText>
+                </MudTh>
+                <MudTh Style="text-align: right;">
+                    <MudText Typo="Typo.h6" Color="Color.Success">
+                        <strong>@achat.MontantTotal.ToString("N2") DH</strong>
+                    </MudText>
+                </MudTh>
+            </FooterContent>
+        </MudTable>
+
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Secondary" 
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="RetourListe"
+                   Class="mt-4">
+            Retour à la liste
+        </MudButton>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    Achat? achat;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        achat = await AchatService.GetAchat(Id);
+    }
+
+    void RetourListe()
+    {
+        Nav.NavigateTo("/achats");
+    }
+
+    Color GetStatutColor(string? statut)
+    {
+        return statut?.ToLower() switch
+        {
+            "validé" or "valide" => Color.Success,
+            "en cours" => Color.Info,
+            "annulé" or "annule" => Color.Error,
+            "brouillon" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+}

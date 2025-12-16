@@ -1,0 +1,101 @@
+﻿@page "/login"
+@using System.Security.Claims
+@using GestionCommercial.Models
+@using GestionCommercial.Security
+@inject GestionCommercial.Services.UtilisateurService UserService
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.WebUtilities;
+
+
+<h3>Connexion</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="@model" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label class="form-label">Nom d'utilisateur</label>
+        <InputText class="form-control" @bind-Value="model.Username" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Mot de passe</label>
+        <InputText type="password" class="form-control" @bind-Value="model.Password" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Se connecter</button>
+</EditForm>
+
+@code {
+    class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    LoginModel model = new();
+    string? errorMessage;
+
+    [Parameter] public string? ReturnUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // ناخد returnUrl من query string
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("returnUrl", out var ret))
+        {
+            ReturnUrl = ret.ToString();
+        }
+    }
+
+    // private async Task HandleLogin()
+    // {
+    //     errorMessage = null;
+
+    //     var user = await UserService.Authenticate(model.Username, model.Password);
+    //     if (user == null)
+    //     {
+    //         errorMessage = "Nom d'utilisateur ou mot de passe incorrect.";
+    //         return;
+    //     }
+
+    //     // نستعمل CustomAuthStateProvider
+    //     if (AuthProvider is CustomAuthStateProvider custom)
+    //     {
+    //         custom.MarkUserAsAuthenticated(user);
+    //     }
+
+    //     // رجع للصفحة الأصلية أو للـ home
+    //     if (!string.IsNullOrEmpty(ReturnUrl))
+    //         Nav.NavigateTo(ReturnUrl, forceLoad: true);
+    //     else
+    //         Nav.NavigateTo("/", forceLoad: true);
+    // }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+
+        var user = await UserService.AuthenticateAsync(model.Username, model.Password);
+        if (user == null)
+        {
+            errorMessage = "Nom d'utilisateur ou mot de passe incorrect.";
+            return;
+        }
+
+        if (AuthProvider is CustomAuthStateProvider custom)
+        {
+            custom.MarkUserAsAuthenticated(user);
+        }
+
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+
+}

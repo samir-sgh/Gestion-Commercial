@@ -1,0 +1,140 @@
+﻿@page "/stock/ajuster"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.StockService StockService
+@inject GestionCommercial.Services.AchatService AchatService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    <!-- ⭐ HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Ajustement de stock</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Modifier manuellement la quantité d'un produit dans un dépôt
+            </MudText>
+        </MudStack>
+    </MudStack>
+
+
+    @if (produits == null || depots == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Class="mt-2" Color="Color.Secondary">
+            Chargement...
+        </MudText>
+    }
+    else
+    {
+        <MudCard Elevation="2">
+            <MudCardContent>
+
+                <EditForm Model="@form" OnValidSubmit="Ajuster">
+                    <DataAnnotationsValidator />
+
+                    <MudGrid Spacing="3">
+
+                        <!-- Produit -->
+                        <MudItem xs="12" sm="6" md="5">
+                            <MudSelect T="int"
+                                       Label="Produit"
+                                       @bind-Value="form.ProduitId"
+                                       Required="true"
+                                       RequiredError="Produit requis">
+                                <MudSelectItem Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var p in produits)
+                                {
+                                    <MudSelectItem Value="@p.ProduitId">@p.NomArticle</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Dépôt -->
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSelect T="int"
+                                       Label="Dépôt"
+                                       @bind-Value="form.DepotId"
+                                       Required="true"
+                                       RequiredError="Dépôt requis">
+                                <MudSelectItem Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var d in depots)
+                                {
+                                    <MudSelectItem Value="@d.IdDepot">@d.NomDepot</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Quantité -->
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudNumericField T="int"
+                                             Label="Nouvelle quantité"
+                                             Min="0"
+                                             @bind-Value="form.NouvelleQuantite"
+                                             Required="true"
+                                             RequiredError="Quantité obligatoire" />
+                        </MudItem>
+
+                    </MudGrid>
+
+                    <MudStack Row="true" Justify="Justify.FlexStart" Class="mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   ButtonType="ButtonType.Submit"
+                                   StartIcon="@Icons.Material.Filled.Save">
+                            Ajuster
+                        </MudButton>
+                    </MudStack>
+
+                </EditForm>
+
+            </MudCardContent>
+        </MudCard>
+    }
+</MudContainer>
+
+@code {
+    // ===== Form ViewModel =====
+    class AjusterStockForm
+    {
+        public int ProduitId { get; set; }
+        public int DepotId { get; set; }
+        public int NouvelleQuantite { get; set; }
+    }
+
+    AjusterStockForm form = new();
+
+    List<Produit>? produits;
+    List<Depot>? depots;
+
+    protected override async Task OnInitializedAsync()
+    {
+        depots = await AchatService.GetDepots();
+        produits = await AchatService.GetProduits();
+    }
+
+    private async Task Ajuster()
+    {
+        if (form.ProduitId == 0 || form.DepotId == 0)
+        {
+            Snackbar.Add("Veuillez choisir un produit et un dépôt.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            bool ok = await StockService.AjusterStock(
+                form.ProduitId,
+                form.DepotId,
+                form.NouvelleQuantite);
+
+            if (ok)
+                Snackbar.Add("Stock ajusté avec succès.", Severity.Success);
+            else
+                Snackbar.Add("Ajustement non effectué.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur lors de l'ajustement : {ex.Message}", Severity.Error);
+        }
+    }
+}

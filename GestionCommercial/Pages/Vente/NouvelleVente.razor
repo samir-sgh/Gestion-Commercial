@@ -1,0 +1,261 @@
+﻿@page "/ventes/nouvelle"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.VenteService VenteService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Nouvelle vente</MudText>
+
+    @if (clients == null || produits == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Class="mt-2">Chargement...</MudText>
+    }
+    else
+    {
+        <EditForm Model="vente" OnValidSubmit="Sauver">
+            <DataAnnotationsValidator />
+
+            <!-- ===================== EN-TÊTE VENTE ===================== -->
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardContent>
+                    <MudGrid Spacing="3">
+                        <!-- Client -->
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSelect T="int"
+                                       Label="Client"
+                                       @bind-Value="vente.IdTiers"
+                                       Required="true"
+                                       RequiredError="Client requis">
+                                <MudSelectItem Value="0">-- Choisir --</MudSelectItem>
+                                @foreach (var c in clients)
+                                {
+                                    <MudSelectItem Value="@c.IdTiers">@c.NomTiers</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Date vente -->
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudDatePicker Label="Date"
+                                           @bind-Date="venteDate"
+                                           Editable="true"
+                                           DateFormat="dd/MM/yyyy" />
+                        </MudItem>
+
+                        <!-- Type document -->
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect T="string"
+                                       Label="Type document"
+                                       @bind-Value="vente.TypeDocument">
+                                <MudSelectItem Value="@("Facture")">Facture</MudSelectItem>
+                                <MudSelectItem Value="@("Ticket")">Ticket</MudSelectItem>
+                                <MudSelectItem Value="@("BL")">Bon de livraison</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Remarque -->
+                        <MudItem xs="12">
+                            <MudTextField T="string"
+                                          Label="Remarque"
+                                          @bind-Value="vente.Remarque"
+                                          Lines="2" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- ===================== LIGNES DE VENTE ===================== -->
+            <MudText Typo="Typo.h5" Class="mt-4 mb-2">Lignes</MudText>
+
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudTable Items="@vente.Lignes" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Produit</MudTh>
+                            <MudTh>Qte</MudTh>
+                            <MudTh>Prix</MudTh>
+                            <MudTh>Remise %</MudTh>
+                            <MudTh>Total</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate Context="ligne">
+                            <!-- Produit -->
+                            <MudTd DataLabel="Produit">
+                                <MudSelect T="int"
+                                           @bind-Value="ligne.ProduitId"
+                                           Dense="true"
+                                           Margin="Margin.Dense">
+                                    <MudSelectItem Value="0">--Produit--</MudSelectItem>
+                                    @foreach (var p in produits)
+                                    {
+                                        <MudSelectItem Value="@p.ProduitId">@p.NomArticle</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudTd>
+
+                            <!-- Quantité -->
+                            <MudTd DataLabel="Qte">
+                                <MudNumericField T="int"
+                                                 Value="@ligne.QteVendue"
+                                                 ValueChanged="@(val => {ligne.QteVendue = val;RecalcTotal();})"
+                                                 ValueExpression="@(() => ligne.QteVendue)"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 HideSpinButtons="true" />
+                            </MudTd>
+
+                            <!-- Prix -->
+                            <MudTd DataLabel="Prix">
+                                <MudNumericField T="decimal"
+                                                 Value="@ligne.PrixVenteUnitaire"
+                                                 ValueChanged="@(val =>
+                                                     {
+                                                         ligne.PrixVenteUnitaire = val;
+                                                         RecalcTotal();
+                                                     })"
+                                                 ValueExpression="@(() => ligne.PrixVenteUnitaire)"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Step="0.01M"
+                                                 HideSpinButtons="true" />
+                            </MudTd>
+
+                            <!-- Remise % -->
+                            <MudTd DataLabel="Remise %">
+                                <MudNumericField T="decimal?"
+                                                 Value="@ligne.Remise"
+                                                 ValueChanged="@(val =>
+                                                     {
+                                                         ligne.Remise = val;
+                                                         RecalcTotal();
+                                                     })"
+                                                 ValueExpression="@(() => ligne.Remise)"
+                                                 Dense="true"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Max="100"
+                                                 Step="0.01M"
+                                                 HideSpinButtons="true" />
+                            </MudTd>
+
+                            <!-- Total ligne -->
+                            <MudTd DataLabel="Total">
+                                <MudText Typo="Typo.body2">
+                                    <strong>@ligne.TotalLigne.ToString("N2")</strong>
+                                </MudText>
+                            </MudTd>
+
+                            <!-- Supprimer -->
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => RemoveLigne(ligne))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="AddLigne"
+                               Class="mt-3">
+                        Ajouter une ligne
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- ===================== TOTAL ===================== -->
+            <MudCard Elevation="2" Class="mt-4">
+                <MudCardContent>
+                    <MudStack Row="true" Justify="Justify.FlexEnd">
+                        <MudText Typo="Typo.h6">
+                            Total : <span style="font-weight:bold">@vente.MontantTotal.ToString("N2") DH</span>
+                        </MudText>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- ===================== BOUTONS ===================== -->
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           Href="/ventes">
+                    Annuler
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           ButtonType="ButtonType.Submit">
+                    Enregistrer
+                </MudButton>
+            </MudStack>
+        </EditForm>
+    }
+</MudContainer>
+
+@code {
+    Vente vente = new();
+    List<Tiers>? clients;
+    List<Produit>? produits;
+
+    DateTime? venteDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clients   = await VenteService.GetClients();
+        produits  = await VenteService.GetProduits();
+
+        vente.DateVente    = DateTime.Today;
+        venteDate          = DateTime.Today;
+        vente.TypeDocument = "Facture";
+
+        AddLigne();
+    }
+
+    void AddLigne()
+    {
+        vente.Lignes.Add(new LigneVente { QteVendue = 1 });
+        RecalcTotal();
+    }
+
+    void RemoveLigne(LigneVente ligne)
+    {
+        vente.Lignes.Remove(ligne);
+        RecalcTotal();
+    }
+
+    void RecalcTotal()
+    {
+        vente.MontantTotal = vente.Lignes.Sum(l => l.TotalLigne);
+    }
+
+    async Task Sauver()
+    {
+        if (venteDate.HasValue)
+            vente.DateVente = venteDate.Value;
+
+        // mini validation côté client
+        if (vente.IdTiers <= 0)
+        {
+            Snackbar.Add("Veuillez choisir un client.", Severity.Error);
+            return;
+        }
+
+        if (!vente.Lignes.Any(l => l.ProduitId > 0 && l.QteVendue > 0 && l.PrixVenteUnitaire >= 0))
+        {
+            Snackbar.Add("Veuillez saisir au moins une ligne de vente valide.", Severity.Error);
+            return;
+        }
+
+        RecalcTotal();
+
+        var id = await VenteService.CreerVente(vente);
+        Snackbar.Add("Vente créée avec succès !", Severity.Success);
+        Nav.NavigateTo("/ventes");
+    }
+}

@@ -1,0 +1,235 @@
+﻿@page "/ventes"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.VenteService VenteService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    <!-- ⭐ HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Ventes</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Suivi des ventes clients et des documents (Facture / Ticket / BL)
+            </MudText>
+        </MudStack>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Size="Size.Large"
+                   Href="/ventes/nouvelle">
+            Nouvelle vente
+        </MudButton>
+    </MudStack>
+
+    @if (ventes == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Chargement des ventes...
+        </MudText>
+    }
+    else
+    {
+        var liste = filteredVentes.ToList();
+
+        <!-- ⭐ FILTERS CARD -->
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardContent>
+                <MudGrid Spacing="3">
+                    <!-- Date Du -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Du"
+                                       @bind-Date="dateFrom"
+                                       Editable="true"
+                                       DateFormat="dd/MM/yyyy"
+                                       Clearable="true" />
+                    </MudItem>
+
+                    <!-- Date Au -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Au"
+                                       @bind-Date="dateTo"
+                                       Editable="true"
+                                       DateFormat="dd/MM/yyyy"
+                                       Clearable="true" />
+                    </MudItem>
+
+                    <!-- Client -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="int"
+                                   Label="Client"
+                                   @bind-Value="selectedClientId"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            <MudSelectItem Value="0">Tous les clients</MudSelectItem>
+                            @foreach (var c in clientOptions)
+                            {
+                                <MudSelectItem Value="@c.IdTiers">@c.ClientNom</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <!-- Recherche -->
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string"
+                                      Label="Recherche"
+                                      @bind-Value="searchText"
+                                      Placeholder="Nom client, remarque..."
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Search"
+                                      Clearable="true" />
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        @if (!liste.Any())
+        {
+            <MudAlert Severity="Severity.Info">
+                Aucune vente trouvée avec les filtres actuels.
+            </MudAlert>
+        }
+        else
+        {
+            <!-- ⭐ STATS -->
+            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-3">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Nombre de ventes : <strong>@liste.Count</strong>
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Primary">
+                    Total TTC : <strong>@liste.Sum(v => v.MontantTotal).ToString("N2") DH</strong>
+                </MudText>
+            </MudStack>
+
+            <!-- ⭐ TABLE -->
+            <MudTable Items="@liste"
+                      Hover="true"
+                      Striped="true"
+                      Dense="true"
+                      Elevation="2">
+                <HeaderContent>
+                    <MudTh>N°</MudTh>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Client</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh Style="text-align: right;">Montant TTC</MudTh>
+                    <MudTh>Statut</MudTh>
+                    <MudTh>Remarque</MudTh>
+                    <MudTh Style="text-align: right;"></MudTh> @* <-- جديد *@
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="N°">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">#@context.VenteId</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Date">@context.DateVente.ToShortDateString()</MudTd>
+                    <MudTd DataLabel="Client">@context.ClientNom</MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                            @context.TypeDocument
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Montant" Style="text-align: right;">
+                        <MudText Typo="Typo.body2">
+                            <strong>@context.MontantTotal.ToString("N2") DH</strong>
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Statut">
+                        <MudChip T="string" Size="Size.Small" Color="@GetStatutColor(context.Statut)">
+                            @context.Statut
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Remarque">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary"
+                                 Style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            @context.Remarque
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="" Style="text-align: right;">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   Href="@($"/ventes/{context.VenteId}")">
+                            Détails
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    }
+</MudContainer>
+
+@code {
+    List<Vente>? ventes;
+
+    // Filtres
+    DateTime? dateFrom;
+    DateTime? dateTo;
+    int selectedClientId = 0;
+    string? searchText;
+
+    // Liste des clients pour le select (dédoublonnée)
+    List<Vente> clientOptions => ventes?
+        .GroupBy(v => new { v.IdTiers, v.ClientNom })
+        .Select(g => g.First())
+        .OrderBy(v => v.ClientNom)
+        .ToList()
+        ?? new List<Vente>();
+
+    // Ventes filtrées
+    IEnumerable<Vente> filteredVentes
+    {
+        get
+        {
+            if (ventes == null)
+                return Enumerable.Empty<Vente>();
+
+            var query = ventes.AsEnumerable();
+
+            if (dateFrom.HasValue)
+            {
+                var d1 = dateFrom.Value.Date;
+                query = query.Where(v => v.DateVente.Date >= d1);
+            }
+
+            if (dateTo.HasValue)
+            {
+                var d2 = dateTo.Value.Date;
+                query = query.Where(v => v.DateVente.Date <= d2);
+            }
+
+            if (selectedClientId > 0)
+            {
+                query = query.Where(v => v.IdTiers == selectedClientId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var s = searchText.Trim().ToLower();
+                query = query.Where(v =>
+                    (!string.IsNullOrEmpty(v.ClientNom) &&
+                     v.ClientNom.ToLower().Contains(s))
+                    || (!string.IsNullOrEmpty(v.Remarque) &&
+                        v.Remarque.ToLower().Contains(s)));
+            }
+
+            return query.OrderByDescending(v => v.DateVente).ThenByDescending(v => v.VenteId);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ventes = await VenteService.GetListeVentes();
+    }
+
+    Color GetStatutColor(string? statut)
+    {
+        return statut?.ToLower() switch
+        {
+            "validé" or "valide" => Color.Success,
+            "en cours"           => Color.Info,
+            "annulé" or "annule" => Color.Error,
+            "brouillon"          => Color.Warning,
+            _                    => Color.Default
+        };
+    }
+}

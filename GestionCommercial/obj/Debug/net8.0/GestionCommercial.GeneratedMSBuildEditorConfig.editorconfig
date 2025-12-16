@@ -1,0 +1,140 @@
+is_global = true
+build_property.MudDebugAnalyzer = 
+build_property.MudAllowedAttributePattern = 
+build_property.MudAllowedAttributeList = 
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = GestionCommercial
+build_property.RootNamespace = GestionCommercial
+build_property.ProjectDir = D:\C#\Web Project\GestionCommercial\GestionCommercial\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = D:\C#\Web Project\GestionCommercial\GestionCommercial
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Components/App.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Components/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Achat/DetailsAchat.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNoYXRcRGV0YWlsc0FjaGF0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Achat/ListeAchats.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNoYXRcTGlzdGVBY2hhdHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Achat/NouveauAchat.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNoYXRcTm91dmVhdUFjaGF0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Caisse/InterfaceCaisse.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2Fpc3NlXEludGVyZmFjZUNhaXNzZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Depot/EditDepot.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGVwb3RcRWRpdERlcG90LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Depot/ListeDepots.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGVwb3RcTGlzdGVEZXBvdHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Error.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Produits/ListeProduits.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVpdHNcTGlzdGVQcm9kdWl0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Produits/ModifierProduit.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVpdHNcTW9kaWZpZXJQcm9kdWl0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Produits/NouveauProduit.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVpdHNcTm91dmVhdVByb2R1aXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Stock/AjusterStock.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RvY2tcQWp1c3RlclN0b2NrLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Stock/MouvementsStock.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RvY2tcTW91dmVtZW50c1N0b2NrLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Stock/StockActuelParDepot.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RvY2tcU3RvY2tBY3R1ZWxQYXJEZXBvdC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Stock/TransfertStock.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RvY2tcVHJhbnNmZXJ0U3RvY2sucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Tiers/ListeTiers.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGllcnNcTGlzdGVUaWVycy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Tiers/NouveauTiers.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGllcnNcTm91dmVhdVRpZXJzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Users/EditUser.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXNlcnNcRWRpdFVzZXIucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Users/ListeUsers.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXNlcnNcTGlzdGVVc2Vycy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Vente/DetailsVente.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmVudGVcRGV0YWlsc1ZlbnRlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Vente/ListeVentes.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmVudGVcTGlzdGVWZW50ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Pages/Vente/NouvelleVente.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmVudGVcTm91dmVsbGVWZW50ZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Shared/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXFJlZGlyZWN0VG9Mb2dpbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-qyj2ccf0dx
+
+[D:/C\#/Web Project/GestionCommercial/GestionCommercial/Shared/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE5hdk1lbnUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-tkyp7tpseb

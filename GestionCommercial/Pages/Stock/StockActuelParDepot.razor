@@ -1,0 +1,140 @@
+﻿@page "/stock"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.StockService StockService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    <!-- ⭐ HEADER -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h4">Stock</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Stock actuel par dépôt et par produit
+            </MudText>
+        </MudStack>
+    </MudStack>
+
+    @if (stock == null)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Chargement du stock...
+        </MudText>
+    }
+    else
+    {
+        var liste = filteredStock.ToList();
+
+        <!-- ⭐ FILTERS CARD -->
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardContent>
+                <MudGrid Spacing="3">
+                    <!-- Dépôt -->
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudSelect T="string"
+                                   Label="Dépôt"
+                                   @bind-Value="selectedDepot"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            <MudSelectItem T="string">Tous les dépôts</MudSelectItem>
+                            @foreach (var d in depotOptions)
+                            {
+                                <MudSelectItem Value="@d">@d</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <!-- Recherche produit -->
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField T="string"
+                                      Label="Recherche produit"
+                                      @bind-Value="searchText"
+                                      Placeholder="Nom produit..."
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Search"
+                                      Clearable="true" />
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        @if (!liste.Any())
+        {
+            <MudAlert Severity="Severity.Info">
+                Aucun stock trouvé avec les filtres actuels.
+            </MudAlert>
+        }
+        else
+        {
+            <!-- ⭐ TABLE STOCK -->
+            <MudTable Items="@liste"
+                      Hover="true"
+                      Striped="true"
+                      Dense="true"
+                      Elevation="2">
+                <HeaderContent>
+                    <MudTh>Produit</MudTh>
+                    <MudTh>Dépôt</MudTh>
+                    <MudTh Style="text-align:right;">Quantité réelle</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Produit">@context.NomArticle</MudTd>
+                    <MudTd DataLabel="Dépôt">@context.NomDepot</MudTd>
+                    <MudTd DataLabel="Quantité" Style="text-align:right;">
+                        @context.QuantiteReelle
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    }
+</MudContainer>
+
+@code {
+    List<ProduitStock>? stock;
+
+    // Filtres
+    string? selectedDepot = "";
+    string? searchText;
+
+    // Liste des dépôts distincts
+    List<string> depotOptions => stock?
+        .Select(s => s.NomDepot)
+        .Where(n => !string.IsNullOrWhiteSpace(n))
+        .Distinct()
+        .OrderBy(n => n)
+        .ToList()
+        ?? new List<string>();
+
+    // Stock filtré
+    IEnumerable<ProduitStock> filteredStock
+    {
+        get
+        {
+            if (stock == null)
+                return Enumerable.Empty<ProduitStock>();
+
+            var query = stock.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(selectedDepot))
+            {
+                query = query.Where(s => s.NomDepot == selectedDepot);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var s = searchText.Trim().ToLower();
+                query = query.Where(x =>
+                    !string.IsNullOrEmpty(x.NomArticle) &&
+                    x.NomArticle.ToLower().Contains(s));
+            }
+
+            return query
+                .OrderBy(x => x.NomDepot)
+                .ThenBy(x => x.NomArticle);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        stock = await StockService.GetStockActuel();
+    }
+}

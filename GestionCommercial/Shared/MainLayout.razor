@@ -1,0 +1,83 @@
+﻿@inherits LayoutComponentBase
+
+<!-- Providers MudBlazor (كلهم self-closing فنسختك) -->
+<MudThemeProvider Theme="@customTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<MudLayout>
+    <!-- ⭐ SIDEBAR (Drawer) -->
+    <MudDrawer @bind-Open="@drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2"
+               Variant="@DrawerVariant.Mini"
+               OpenMiniOnHover="true">
+        <MudDrawerHeader Style="padding: 0.9rem;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudAvatar Color="Color.Dark" Size="Size.Medium" Rounded="true">GC</MudAvatar>
+                    <MudStack Spacing="0" Class="mud-drawer-header-text">
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">GestionCommercial</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Dashboard</MudText>
+                    </MudStack>
+                </MudStack>
+            </MudStack>
+        </MudDrawerHeader>
+
+        <NavMenu />
+    </MudDrawer>
+
+    <!-- ⭐ APP BAR (Top) -->
+    <MudAppBar Elevation="1" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@ToggleDrawer" />
+        <MudSpacer />
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Inherit"
+                   StartIcon="@Icons.Material.Filled.Logout"
+                   Href="/logout"
+                   Size="Size.Small">
+            Déconnexion
+        </MudButton>
+    </MudAppBar>
+
+    <!-- ⭐ MAIN CONTENT -->
+    <MudMainContent Style="background: #f5f6fa;">
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4 mb-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool drawerOpen = true;
+
+    void ToggleDrawer()
+    {
+        drawerOpen = !drawerOpen;
+    }
+
+    private MudTheme customTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#111827",
+            Secondary = "#6366f1",
+            AppbarBackground = "#ffffff",
+            AppbarText = "#111827",
+            DrawerBackground = "#ffffff",
+            DrawerText = "#374151",
+            Success = "#10b981",
+            Info = "#3b82f6",
+            Warning = "#f59e0b",
+            Error = "#ef4444"
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "8px"
+        }
+    };
+}

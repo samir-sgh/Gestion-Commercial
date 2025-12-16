@@ -1,0 +1,210 @@
+﻿@page "/ventes/{id:int}"
+@using GestionCommercial.Models
+@inject GestionCommercial.Services.VenteService VenteService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Class="mt-2">Chargement des détails de la vente...</MudText>
+    }
+    else if (loadError != null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-3">
+            Erreur de chargement : @loadError
+        </MudAlert>
+
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@GoBack">
+            Retour à la liste
+        </MudButton>
+    }
+    else if (vente == null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-3">
+            Vente introuvable.
+        </MudAlert>
+
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@GoBack">
+            Retour à la liste
+        </MudButton>
+    }
+    else
+    {
+        <!-- ⭐ HEADER -->
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.h4">
+                    Détails vente #@vente.VenteId
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Client : <strong>@vente.ClientNom</strong> — Date : @vente.DateVente.ToShortDateString()
+                </MudText>
+            </MudStack>
+
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="@GetStatutColor(vente.Statut)">
+                    @vente.Statut
+                </MudChip>
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.ArrowBack"
+                           OnClick="@GoBack">
+                    Retour
+                </MudButton>
+            </MudStack>
+        </MudStack>
+
+        <!-- ⭐ CARD INFO GENERALE -->
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Client</MudText>
+                        <MudText Typo="Typo.body1">@vente.ClientNom</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Dépôt</MudText>
+                        <MudText Typo="Typo.body1">@vente.DepotNom</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Type document</MudText>
+                        <MudText Typo="Typo.body1">@vente.TypeDocument</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
+                        <MudText Typo="Typo.body1">@vente.DateVente.ToShortDateString()</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Montant total</MudText>
+                        <MudText Typo="Typo.body1" Color="Color.Primary">
+                            <strong>@vente.MontantTotal.ToString("N2") DH</strong>
+                        </MudText>
+                    </MudItem>
+
+                    @if (!string.IsNullOrWhiteSpace(vente.Remarque))
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Remarque</MudText>
+                            <MudText Typo="Typo.body2">@vente.Remarque</MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- ⭐ LIGNES DE VENTE -->
+        <MudText Typo="Typo.h5" Class="mt-2 mb-2">Lignes de la vente</MudText>
+
+        @if (vente.Lignes == null || !vente.Lignes.Any())
+        {
+            <MudAlert Severity="Severity.Info">
+                Aucune ligne enregistrée pour cette vente.
+            </MudAlert>
+        }
+        else
+        {
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudTable Items="@vente.Lignes"
+                              Hover="true"
+                              Dense="true"
+                              Striped="true">
+                        <HeaderContent>
+                            <MudTh>Produit</MudTh>
+                            <MudTh Style="text-align:right;">Qte</MudTh>
+                            <MudTh Style="text-align:right;">Prix</MudTh>
+                            <MudTh Style="text-align:right;">Remise %</MudTh>
+                            <MudTh Style="text-align:right;">Total</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="ligne">
+                            <MudTd DataLabel="Produit">
+                                @* نفترض عندك NomArticle فـ LigneVente أو على الأقل ProduitId *@
+                                @if (!string.IsNullOrEmpty(ligne.NomArticle))
+                                {
+                                    <MudText Typo="Typo.body2">@ligne.NomArticle</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2">Produit #@ligne.ProduitId</MudText>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Qte" Style="text-align:right;">
+                                @ligne.QteVendue.ToString("N2")
+                            </MudTd>
+                            <MudTd DataLabel="Prix" Style="text-align:right;">
+                                @ligne.PrixVenteUnitaire.ToString("N2")
+                            </MudTd>
+                            <MudTd DataLabel="Remise" Style="text-align:right;">
+                                @ligne.Remise.GetValueOrDefault().ToString("N2")
+                            </MudTd>
+                            <MudTd DataLabel="Total" Style="text-align:right;">
+                                <strong>@ligne.TotalLigne.ToString("N2")</strong>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    private Vente? vente;
+    private bool isLoading = true;
+    private string? loadError;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        loadError = null;
+
+        try
+        {
+            vente = await VenteService.GetVente(id); // تأكد أن هاد الميثود موجود فـ service
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+            Snackbar.Add($"Erreur lors du chargement de la vente : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/ventes");
+    }
+
+    Color GetStatutColor(string? statut)
+    {
+        return statut?.ToLower() switch
+        {
+            "validé" or "valide" => Color.Success,
+            "en cours" => Color.Info,
+            "annulé" or "annule" => Color.Error,
+            "brouillon" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+}

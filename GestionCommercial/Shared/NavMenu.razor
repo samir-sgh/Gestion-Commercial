@@ -1,0 +1,110 @@
+﻿<MudNavMenu>
+
+    <!-- ⭐ SECTION: GENERAL -->
+    <MudText Typo="Typo.caption"
+             Class="px-4 mt-2 mb-1"
+             Style="text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">
+        Général
+    </MudText>
+
+    <MudNavLink Href=""
+                Match="NavLinkMatch.All"
+                Icon="@Icons.Material.Filled.Home">
+        Home
+    </MudNavLink>
+
+    <MudNavLink Href="achats"
+                Icon="@Icons.Material.Filled.ShoppingBag">
+        Achats
+    </MudNavLink>
+
+    <MudNavLink Href="ventes"
+                Icon="@Icons.Material.Filled.ShoppingCart">
+        Ventes
+    </MudNavLink>
+
+
+    <!-- ⭐ SECTION: STOCK -->
+    <MudText Typo="Typo.caption"
+             Class="px-4 mt-4 mb-1"
+             Style="text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">
+        Stock
+    </MudText>
+
+    <MudNavGroup Title="Stock"
+                 Icon="@Icons.Material.Filled.Inventory"
+                 Expanded="@isStockOpen"
+                 ExpandedChanged="@((bool val) => isStockOpen = val)">
+        <MudNavLink Href="stock"
+                    Icon="@Icons.Material.Filled.Dashboard">
+            Vue globale
+        </MudNavLink>
+        <MudNavLink Href="stock/transfert"
+                    Icon="@Icons.Material.Filled.SwapHoriz">
+            Transfert stock
+        </MudNavLink>
+        <MudNavLink Href="stock/ajuster"
+                    Icon="@Icons.Material.Filled.Tune">
+            Ajuster stock
+        </MudNavLink>
+        <MudNavLink Href="stock/mouvements"
+                    Icon="@Icons.Material.Filled.History">
+            Mouvements stock
+        </MudNavLink>
+    </MudNavGroup>
+
+
+    <!-- ⭐ SECTION: REFERENTIEL -->
+    <MudText Typo="Typo.caption"
+             Class="px-4 mt-4 mb-1"
+             Style="text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">
+        Référentiel
+    </MudText>
+
+    <MudNavGroup Title="Référentiel"
+                 Icon="@Icons.Material.Filled.GridView"
+                 Expanded="@isReferentielOpen"
+                 ExpandedChanged="@((bool val) => isReferentielOpen = val)">
+        <MudNavLink Href="produits"
+                    Icon="@Icons.Material.Filled.Inventory2">
+            Produits
+        </MudNavLink>
+        <MudNavLink Href="tiers"
+                    Icon="@Icons.Material.Filled.People">
+            Tiers
+        </MudNavLink>
+        <MudNavLink Href="depots"
+                    Icon="@Icons.Material.Filled.Warehouse">
+            Dépôts
+        </MudNavLink>
+    </MudNavGroup>
+
+
+    <!-- ⭐ SECTION: ADMINISTRATION -->
+    <MudText Typo="Typo.caption"
+             Class="px-4 mt-4 mb-1"
+             Style="text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">
+        Administration
+    </MudText>
+
+    <MudNavGroup Title="Administration"
+                 Icon="@Icons.Material.Filled.Settings"
+                 Expanded="@isAdminOpen"
+                 ExpandedChanged="@((bool val) => isAdminOpen = val)">
+        <MudNavLink Href="users"
+                    Icon="@Icons.Material.Filled.Badge">
+            Utilisateurs
+        </MudNavLink>
+        <MudNavLink Href="parametres"
+                    Icon="@Icons.Material.Filled.Tune">
+            Paramètres
+        </MudNavLink>
+    </MudNavGroup>
+
+</MudNavMenu>
+
+@code {
+    bool isStockOpen = true;
+    bool isReferentielOpen = true;
+    bool isAdminOpen = true;
+}
